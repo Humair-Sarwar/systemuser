@@ -1,0 +1,344 @@
+{
+  "menuItems": [
+    {
+      "title": "Mobile & Computing",
+      "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing/1",
+      "columns": [
+        {
+          "title": "Smartphones",
+          "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-smartphones/1",
+          "items": [
+            {
+              "label": "Apple iPhones",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-smartphones-apple-iphones/1"
+            },
+            {
+              "label": "Android Phones",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-smartphones-android-phones/1"
+            },
+            {
+              "label": "Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-smartphones-accessories/1"
+            }
+          ]
+        },
+        {
+          "title": "Smartwatches",
+          "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-smartwatches/1",
+          "items": [
+            {
+              "label": "Apple Watches",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-smartwatches-apple-watches/1"
+            },
+            {
+              "label": "Android Watches",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-smartwatches-android-watches/1"
+            },
+            {
+              "label": "Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-smartwatches-accessories/1"
+            }
+          ]
+        },
+        {
+          "title": "Tablets",
+          "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-tablets/1",
+          "items": [
+            {
+              "label": "Apple iPads",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-tablets-apple-ipads/1"
+            },
+            {
+              "label": "Android Tablets",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-tablets-android-tablets/1"
+            },
+            {
+              "label": "Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-tablets-accessories/1"
+            }
+          ]
+        },
+        {
+          "title": "Laptops",
+          "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-laptops/1",
+          "items": [
+            {
+              "label": "Apple Macbooks",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-laptops-apple-macbooks/1"
+            },
+            {
+              "label": "Windows Laptops",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-laptops-windows-laptops/1"
+            },
+            {
+              "label": "Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-laptops-accessories/1"
+            }
+          ]
+        },
+        {
+          "title": "Computing Devices",
+          "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-computing-devices/1",
+          "items": [
+            {
+              "label": "Portable Monitors",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-computing-devices-portable-monitors/1"
+            },
+            {
+              "label": "Office Printers",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-computing-devices-office-printers/1"
+            }
+          ]
+        },
+        {
+          "title": "Audio Essentials",
+          "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-audio-essentials/1",
+          "items": [
+            {
+              "label": "Over Ear Headphones",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-audio-essentials-over-ear-headphones/1"
+            },
+            {
+              "label": "In Ear Headphones",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-audio-essentials-in-ear-headphones/1"
+            },
+            {
+              "label": "Portable Speakers",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-audio-essentials-portable-speakers/1"
+            },
+            {
+              "label": "More Audio Devices",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-audio-essentials-more-audio-devices/1"
+            }
+          ]
+        },
+        {
+          "title": "Tech Accessories",
+          "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-tech-accessories/1",
+          "items": [
+            {
+              "label": "Phone Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-tech-accessories-phone-accessories/1"
+            },
+            {
+              "label": "Watch Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-tech-accessories-watch-accessories/1"
+            },
+            {
+              "label": "Laptop Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-tech-accessories-laptop-accessories/1"
+            },
+            {
+              "label": "Tablet Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/mobile-&-computing-tech-accessories-tablet-accessories/1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Gaming & VR",
+      "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr/1",
+      "columns": [
+        {
+          "title": "Gaming Consoles",
+          "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr-gaming-consoles/1",
+          "items": [
+            {
+              "label": "PlayStation Consoles",
+              "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr-gaming-consoles-playstation-consoles/1"
+            },
+            {
+              "label": "Nintendo Consoles",
+              "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr-gaming-consoles-nintendo-consoles/1"
+            },
+            {
+              "label": "Xbox Consoles",
+              "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr-gaming-consoles-xbox-consoles/1"
+            }
+          ]
+        },
+        {
+          "title": "Virtual Reality",
+          "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr-virtual-reality/1",
+          "items": [
+            {
+              "label": "VR Headsets",
+              "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr-virtual-reality-vr-headsets/1"
+            },
+            {
+              "label": "Smart Glasses",
+              "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr-virtual-reality-smart-glasses/1"
+            }
+          ]
+        },
+        {
+          "title": "Accessories",
+          "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr-accessories/1",
+          "items": [
+            {
+              "label": "Video Games",
+              "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr-accessories-video-games/1"
+            },
+            {
+              "label": "Controllers",
+              "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr-accessories--controllers/1"
+            },
+            {
+              "label": "Headphones",
+              "href": "https://eclattech.societyfiles.com/buy/products/gaming-&-vr-accessories-headphones/1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Accessories",
+      "href": "https://eclattech.societyfiles.com/buy/products/accessories/1",
+      "columns": [
+        {
+          "title": "",
+          "href": "/solutions/enterprise",
+          "items": [
+            {
+              "label": "Phone Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/accessories-phone-accessories/1"
+            }
+          ]
+        },
+        {
+          "title": "",
+          "href": "/solutions/smb",
+          "items": [
+            {
+              "label": "Watch Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/accessories-watch-accessories/1"
+            }
+          ]
+        },
+        {
+          "title": "",
+          "href": "/solutions/startups",
+          "items": [
+            {
+              "label": "Tablet Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/accessories-tablet-accessories/1"
+            }
+          ]
+        },
+        {
+          "title": "",
+          "href": "/solutions/government",
+          "items": [
+            {
+              "label": "Laptop Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/accessories-laptop-accessories/1"
+            }
+          ]
+        },
+        {
+          "title": "",
+          "href": "/solutions/government",
+          "items": [
+            {
+              "label": "Gaming Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/accessories-gaming-accessories/1"
+            }
+          ]
+        },
+        {
+          "title": "",
+          "href": "/solutions/government",
+          "items": [
+            {
+              "label": "Audio Essentials",
+              "href": "https://eclattech.societyfiles.com/buy/products/accessories-audio-essentials/1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Appliances",
+      "href": "https://eclattech.societyfiles.com/buy/products/appliances/1",
+      "columns": [
+        {
+          "title": "Cameras & Security",
+          "href": "https://eclattech.societyfiles.com/buy/products/appliances-cameras-&-security/1",
+          "items": [
+            {
+              "label": "Smart Home Gadgets",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-cameras-&-security-smart-home-gadgets/1"
+            },
+            {
+              "label": "Security Cameras",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-cameras-&-security-security-cameras/1"
+            },
+            {
+              "label": "Digital Cameras",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-cameras-&-security-digital-cameras/1"
+            },
+            {
+              "label": "Drones",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-cameras-&-security-drones/1"
+            }
+          ]
+        },
+        {
+          "title": "Home Appliances",
+          "href": "https://eclattech.societyfiles.com/buy/products/appliances-home-appliances/1",
+          "items": [
+            {
+              "label": "Garden Equipment",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-home-appliances-garden-equipment/1"
+            },
+            {
+              "label": "Kitchen Appliances",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-home-appliances-kitchen-appliances/1"
+            },
+            {
+              "label": "Cleaning Appliances",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-home-appliances-cleaning-appliances/1"
+            },
+            {
+              "label": "Lounge Accessories",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-home-appliances-lounge-accessories/1"
+            }
+          ]
+        },
+        {
+          "title": "Beauty & Fitness",
+          "href": "https://eclattech.societyfiles.com/buy/products/appliances-beauty-&-fitness/1",
+          "items": [
+            {
+              "label": "Hair Styling Tools",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-beauty-&-fitness-hair-styling-tools/1"
+            },
+            {
+              "label": "Fitness Equipment",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-beauty-&-fitness-fitness-equipment/1"
+            }
+          ]
+        },
+        {
+          "title": "Tech Appliances",
+          "href": "https://eclattech.societyfiles.com/buy/products/appliances-tech-appliances/1",
+          "items": [
+            {
+              "label": "Smart TV's",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-tech-appliances-smart-tv's/1"
+            },
+            {
+              "label": "Monitors",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-tech-appliances-monitors/1"
+            },
+            {
+              "label": "Printers",
+              "href": "https://eclattech.societyfiles.com/buy/products/appliances-tech-appliances-printers/1"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
