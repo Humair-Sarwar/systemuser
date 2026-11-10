@@ -267,6 +267,7 @@ const INITIAL_FORM_DATA = {
   latitude: "",
   longitude: "",
   description: "",
+  business_group_id: "",
 };
 
 export default function Businesses() {
@@ -298,6 +299,7 @@ export default function Businesses() {
     existing_schemas: [],
     business_types: [],
     currencies: [],
+    business_groups: [],
   });
 
   // Drawer states
@@ -450,8 +452,9 @@ export default function Businesses() {
   };
 
   // Schema creation progress popup states
+  const TOTAL_MIGRATIONS = 492;
   const [schemaProgressOpen, setSchemaProgressOpen] = useState(false);
-  const [schemaProgressStep, setSchemaProgressStep] = useState(0);
+  const [schemaMigrationCount, setSchemaMigrationCount] = useState(0);
   const [schemaProgressPercent, setSchemaProgressPercent] = useState(0);
   const [schemaProgressStatus, setSchemaProgressStatus] = useState("running"); // 'running' | 'completed' | 'error'
   const [schemaProgressData, setSchemaProgressData] = useState(null);
@@ -480,6 +483,7 @@ export default function Businesses() {
           existing_schemas: res.data.data.existing_schemas || [],
           business_types: res.data.data.business_types || [],
           currencies: res.data.data.currencies || [],
+          business_groups: res.data.data.business_groups || [],
         });
       }
     } catch (err) {
@@ -621,6 +625,7 @@ export default function Businesses() {
       latitude: business.latitude || "",
       longitude: business.longitude || "",
       description: business.description || "",
+      business_group_id: business.business_group_id || "",
     });
     setFormDrawerOpen(true);
   };
@@ -720,57 +725,75 @@ export default function Businesses() {
       return;
     }
 
-    // If Creating: launch the rich animated Schema Provisioning Progress Popup
-    let timer1;
-    let timer2;
-    try {
-      setFormSubmitting(true);
-      setSchemaProgressOpen(true);
-      setSchemaProgressStep(0);
-      setSchemaProgressPercent(15);
-      setSchemaProgressStatus("running");
-      setSchemaProgressData(null);
-      setSchemaProgressError("");
+    // If Creating with new schema: launch Schema Migration Progress Popup (matching user reference)
+    if (formData.schema_type === "new") {
+      let interval;
+      try {
+        setFormSubmitting(true);
+        setSchemaProgressOpen(true);
+        setSchemaProgressStatus("running");
+        setSchemaProgressError("");
+        setSchemaMigrationCount(24);
+        setSchemaProgressPercent(5);
 
-      timer1 = setTimeout(() => {
-        setSchemaProgressStep(1);
-        setSchemaProgressPercent(45);
-      }, 500);
+        let currentCount = 24;
+        interval = setInterval(() => {
+          if (currentCount < 450) {
+            const step = Math.floor(Math.random() * 22) + 14;
+            currentCount = Math.min(currentCount + step, 450);
+            setSchemaMigrationCount(currentCount);
+            setSchemaProgressPercent(Math.round((currentCount / TOTAL_MIGRATIONS) * 100));
+          }
+        }, 200);
 
-      timer2 = setTimeout(() => {
-        setSchemaProgressStep(2);
-        setSchemaProgressPercent(75);
-      }, 1000);
+        const res = await createSystemBusinessApi(payload);
 
-      const res = await createSystemBusinessApi(payload);
+        clearInterval(interval);
 
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-
-      if (res && (res.status === 200 || res.status === 201) && res.data?.status === true) {
-        setSchemaProgressStep(3);
-        setSchemaProgressPercent(90);
-
-        setTimeout(() => {
-          setSchemaProgressStep(4);
+        if (res && (res.status === 200 || res.status === 201) && res.data?.status === true) {
+          setSchemaMigrationCount(TOTAL_MIGRATIONS);
           setSchemaProgressPercent(100);
           setSchemaProgressStatus("completed");
-          setSchemaProgressData(res.data);
-          handleSuccess("Business and multi-tenant schema created successfully!");
-        }, 500);
-      } else {
+
+          setTimeout(() => {
+            setSchemaProgressOpen(false);
+            setFormDrawerOpen(false);
+            handleSuccess("Business and multi-tenant schema created successfully!");
+            fetchBusinesses(currentPage, activeTab, search, ownerFilter, schemaFilter, viewMode);
+            fetchFormOptions();
+          }, 700);
+        } else {
+          setSchemaProgressStatus("error");
+          setSchemaProgressError(res?.data?.message || "Failed to create business");
+          handleError(res?.data?.message || "Failed to create business");
+        }
+      } catch (err) {
+        if (interval) clearInterval(interval);
+        console.error("Error creating business", err);
         setSchemaProgressStatus("error");
-        setSchemaProgressError(res?.data?.message || "Failed to create business");
+        const errTxt = err?.response?.data?.message || err?.message || "An error occurred while creating business";
+        setSchemaProgressError(errTxt);
+        handleError(errTxt);
+      } finally {
+        setFormSubmitting(false);
+      }
+      return;
+    }
+
+    // Creating with existing schema
+    try {
+      setFormSubmitting(true);
+      const res = await createSystemBusinessApi(payload);
+      if (res && (res.status === 200 || res.status === 201) && res.data?.status === true) {
+        handleSuccess("Business created successfully!");
+        setFormDrawerOpen(false);
+        fetchBusinesses(currentPage, activeTab, search, ownerFilter, schemaFilter, viewMode);
+        fetchFormOptions();
+      } else {
         handleError(res?.data?.message || "Failed to create business");
       }
     } catch (err) {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      console.error("Error creating business", err);
-      setSchemaProgressStatus("error");
-      const errTxt = err?.response?.data?.message || err?.message || "An error occurred while creating business";
-      setSchemaProgressError(errTxt);
-      handleError(errTxt);
+      handleError(err?.response?.data?.message || err?.message || "An error occurred while creating business");
     } finally {
       setFormSubmitting(false);
     }
@@ -2039,6 +2062,31 @@ export default function Businesses() {
                       </TextField>
                     </Box>
                   </Box>
+
+                  {/* Row 3: Business Group Dropdown */}
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 320px" } }}>
+                      <TextField
+                        select
+                        fullWidth
+                        size="small"
+                        label="Business Group"
+                        value={formData.business_group_id || ""}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, business_group_id: e.target.value }))}
+                        helperText="Assign this business to a business group (Optional)"
+                        sx={modernInputStyles}
+                      >
+                        <MenuItem value="">
+                          <em>None (No Group)</em>
+                        </MenuItem>
+                        {(formOptions.business_groups || []).map((grp) => (
+                          <MenuItem key={grp.id} value={grp.id}>
+                            {grp.name}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Box>
+                  </Box>
                 </Box>
               </Card>
 
@@ -2607,6 +2655,12 @@ export default function Businesses() {
                       {selectedBusiness.currency}
                     </Typography>
                   </Grid>
+                  <Grid item xs={6}>
+                    <Typography sx={{ fontSize: "12px", color: "#64748b" }}>Business Group</Typography>
+                    <Typography sx={{ fontSize: "13.5px", fontWeight: 600, color: "#2563eb" }}>
+                      {selectedBusiness.group?.name || "None (No Group)"}
+                    </Typography>
+                  </Grid>
                 </Grid>
               </Card>
 
@@ -2631,198 +2685,83 @@ export default function Businesses() {
           </Box>
         )}
       </Drawer>
-      {/* SCHEMA CREATION PROGRESS POPUP DIALOG */}
+      {/* SCHEMA CREATION PROGRESS POPUP DIALOG (Matching Reference Image) */}
       <Dialog
         open={schemaProgressOpen}
         disableEscapeKeyDown={schemaProgressStatus === "running"}
         PaperProps={{
           sx: {
-            borderRadius: "20px",
-            p: 1,
-            width: "520px",
+            borderRadius: "14px",
+            width: "560px",
             maxWidth: "94vw",
+            p: 1,
             boxShadow: "0 24px 60px rgba(15, 23, 42, 0.22)",
             backgroundColor: "#ffffff",
           },
         }}
       >
         <DialogContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
-          {/* Header Icon + Title */}
-          <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "20px",
-                backgroundColor:
-                  schemaProgressStatus === "completed"
-                    ? "#dcfce7"
-                    : schemaProgressStatus === "error"
-                    ? "#fee2e2"
-                    : "#eff6ff",
-                color:
-                  schemaProgressStatus === "completed"
-                    ? "#16a34a"
-                    : schemaProgressStatus === "error"
-                    ? "#ef4444"
-                    : "#2563eb",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                mb: 2,
-                boxShadow:
-                  schemaProgressStatus === "completed"
-                    ? "0 10px 25px rgba(22, 163, 74, 0.2)"
-                    : "0 10px 25px rgba(37, 99, 235, 0.2)",
-                transition: "all 0.3s ease",
-              }}
-            >
-              {schemaProgressStatus === "completed" ? (
-                <CheckCircleRoundedIcon sx={{ fontSize: 36 }} />
-              ) : schemaProgressStatus === "error" ? (
-                <ErrorOutlineRoundedIcon sx={{ fontSize: 36 }} />
-              ) : (
-                <DnsOutlinedIcon sx={{ fontSize: 34 }} />
-              )}
-            </Box>
+          <Typography
+            sx={{
+              fontWeight: 600,
+              fontSize: "1.45rem",
+              color: "#1e293b",
+              letterSpacing: "-0.01em",
+              mb: 1.5,
+            }}
+          >
+            Setting up the schema
+          </Typography>
 
-            <Typography sx={{ fontWeight: 700, fontSize: "19px", color: "#0f172a" }}>
-              {schemaProgressStatus === "completed"
-                ? "Schema Ready & Business Created!"
-                : schemaProgressStatus === "error"
-                ? "Schema Creation Issue"
-                : "Provisioning Business Schema"}
-            </Typography>
+          <Typography
+            sx={{
+              fontSize: "0.95rem",
+              color: "#334155",
+              lineHeight: 1.6,
+              mb: 2.5,
+            }}
+          >
+            Creating <strong>{formData.schema_name || "schema"}</strong> and applying the database
+            migrations. Keep this page open: the business is saved when this finishes.
+          </Typography>
 
-            <Typography sx={{ fontSize: "13px", color: "#64748b", mt: 0.5, px: 1 }}>
-              {schemaProgressStatus === "completed"
-                ? `PostgreSQL schema "${schemaProgressData?.data?.schema_name || formData.schema_name}" is active and configured.`
-                : schemaProgressStatus === "error"
-                ? (schemaProgressError || "An error occurred while creating schema or business.")
-                : `Setting up multi-tenant environment for "${formData.schema_name || 'store'}"...`}
-            </Typography>
-          </Box>
-
-          {/* Progress Bar & Percentage */}
-          <Box sx={{ mb: 3.5 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-              <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#475569" }}>
-                {schemaProgressStatus === "completed" ? "Completed" : "Provisioning Progress"}
-              </Typography>
-              <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: "#2563eb" }}>
-                {schemaProgressPercent}%
-              </Typography>
-            </Box>
+          {/* Progress Bar styled in SystemUser primary blue theme */}
+          <Box sx={{ my: 2 }}>
             <LinearProgress
               variant="determinate"
               value={schemaProgressPercent}
               sx={{
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: "#e2e8f0",
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: "#dbeafe",
                 "& .MuiLinearProgress-bar": {
-                  borderRadius: 4,
-                  backgroundColor:
-                    schemaProgressStatus === "completed"
-                      ? "#16a34a"
-                      : schemaProgressStatus === "error"
-                      ? "#ef4444"
-                      : "#2563eb",
-                  transition: "transform 0.4s ease",
+                  borderRadius: 3,
+                  backgroundColor: "#2563eb",
+                  transition: "transform 0.25s ease-out",
                 },
               }}
             />
           </Box>
 
-          {/* Steps List */}
-          <Stack spacing={1.5} sx={{ mb: 3.5 }}>
-            {SCHEMA_STEPS.map((step, idx) => {
-              const isCompleted = schemaProgressStep > idx || schemaProgressStatus === "completed";
-              const isCurrent = schemaProgressStep === idx && schemaProgressStatus === "running";
-
-              return (
-                <Box
-                  key={idx}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    p: 1.2,
-                    borderRadius: "10px",
-                    backgroundColor: isCurrent ? "#f8fafc" : isCompleted ? "#f0fdf4" : "transparent",
-                    border: isCurrent ? "1px solid #e2e8f0" : isCompleted ? "1px solid #dcfce7" : "1px solid transparent",
-                    transition: "all 0.25s ease",
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22 }}>
-                    {isCompleted ? (
-                      <CheckCircleRoundedIcon sx={{ fontSize: 20, color: "#16a34a" }} />
-                    ) : isCurrent ? (
-                      <CircularProgress size={18} thickness={5} sx={{ color: "#2563eb" }} />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          backgroundColor: "#cbd5e1",
-                        }}
-                      />
-                    )}
-                  </Box>
-
-                  <Typography
-                    sx={{
-                      fontSize: "13px",
-                      fontWeight: isCurrent ? 600 : isCompleted ? 500 : 400,
-                      color: isCurrent ? "#0f172a" : isCompleted ? "#15803d" : "#94a3b8",
-                      flexGrow: 1,
-                    }}
-                  >
-                    {step.label}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Stack>
-
-          {/* Action Button */}
-          {schemaProgressStatus === "completed" && (
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={handleCloseProgressDialog}
-              sx={{
-                backgroundColor: "#2563eb",
-                fontWeight: 600,
-                fontSize: "14px",
-                textTransform: "none",
-                borderRadius: "12px",
-                py: 1.2,
-                boxShadow: "0 6px 18px rgba(37, 99, 235, 0.25)",
-                "&:hover": { backgroundColor: "#1d4ed8" },
-              }}
-            >
-              Done & View Businesses
-            </Button>
-          )}
+          <Typography sx={{ fontSize: "0.875rem", color: "#475569", mt: 1.2 }}>
+            {schemaMigrationCount} of {TOTAL_MIGRATIONS} migrations applied ({schemaProgressPercent}%)
+          </Typography>
 
           {schemaProgressStatus === "error" && (
-            <Button
-              fullWidth
-              variant="outlined"
-              color="error"
-              onClick={() => setSchemaProgressOpen(false)}
-              sx={{
-                fontWeight: 600,
-                fontSize: "14px",
-                textTransform: "none",
-                borderRadius: "12px",
-                py: 1.2,
-              }}
-            >
-              Close
-            </Button>
+            <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid #fee2e2" }}>
+              <Typography sx={{ fontSize: "0.875rem", color: "#dc2626", mb: 1.5, fontWeight: 500 }}>
+                {schemaProgressError || "Failed to set up schema."}
+              </Typography>
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                onClick={() => setSchemaProgressOpen(false)}
+                sx={{ borderRadius: "8px", textTransform: "none", fontWeight: 600 }}
+              >
+                Close
+              </Button>
+            </Box>
           )}
         </DialogContent>
       </Dialog>

@@ -595,6 +595,81 @@ export const deleteSystemBusinessApi = async (id) => {
     }
 };
 
+// ==================== SYSTEM BUSINESS GROUPS APIs ====================
+export const getSystemBusinessGroupsApi = async (params) => {
+    try {
+        const response = await api.get('/api/systemuser/business-groups', { params });
+        return response;
+    } catch (error) {
+        return error;
+    }
+};
+
+export const searchGroupOwnersApi = async (query) => {
+    try {
+        const response = await api.get('/api/systemuser/business-groups/owners', { params: { query } });
+        return response;
+    } catch (error) {
+        return error;
+    }
+};
+
+export const getGroupBusinessesApi = async (ownerId) => {
+    try {
+        const response = await api.get('/api/systemuser/business-groups/businesses', {
+            params: ownerId ? { owner_id: ownerId } : {}
+        });
+        return response;
+    } catch (error) {
+        return error;
+    }
+};
+
+export const getSystemBusinessGroupApi = async (id) => {
+    try {
+        const response = await api.get(`/api/systemuser/business-groups/${id}`);
+        return response;
+    } catch (error) {
+        return error;
+    }
+};
+
+export const createSystemBusinessGroupApi = async (data) => {
+    try {
+        const response = await api.post('/api/systemuser/business-groups', data);
+        return response;
+    } catch (error) {
+        return error;
+    }
+};
+
+export const updateSystemBusinessGroupApi = async (id, data) => {
+    try {
+        const response = await api.put(`/api/systemuser/business-groups/${id}`, data);
+        return response;
+    } catch (error) {
+        return error;
+    }
+};
+
+export const toggleStatusBusinessGroupApi = async (id) => {
+    try {
+        const response = await api.patch(`/api/systemuser/business-groups/${id}/toggle-status`);
+        return response;
+    } catch (error) {
+        return error;
+    }
+};
+
+export const deleteSystemBusinessGroupApi = async (id) => {
+    try {
+        const response = await api.delete(`/api/systemuser/business-groups/${id}`);
+        return response;
+    } catch (error) {
+        return error;
+    }
+};
+
 export const getSystemDashboardStatsApi = async () => {
     try {
         const response = await api.get('/api/systemuser/dashboard/stats');

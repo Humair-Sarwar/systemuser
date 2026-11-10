@@ -6,6 +6,7 @@ import Countries from "../pages/systemuser/Countries";
 import Cities from "../pages/systemuser/Cities";
 import Users from "../pages/systemuser/Users";
 import Businesses from "../pages/systemuser/Businesses";
+import BusinessGroups from "../pages/systemuser/BusinessGroups";
 import PrivateSystemUserRoute from "./PrivateSystemUserRoute";
 import ScrollToTop from "../components/ScrollToTop";
 
@@ -42,6 +43,14 @@ const SystemUserRoutes = [
         element: (
           <PrivateSystemUserRoute>
             <Businesses />
+          </PrivateSystemUserRoute>
+        ),
+      },
+      {
+        path: "business-groups",
+        element: (
+          <PrivateSystemUserRoute>
+            <BusinessGroups />
           </PrivateSystemUserRoute>
         ),
       },
@@ -120,6 +129,14 @@ const SystemUserRoutes = [
         element: (
           <PrivateSystemUserRoute>
             <Businesses />
+          </PrivateSystemUserRoute>
+        ),
+      },
+      {
+        path: "business-groups",
+        element: (
+          <PrivateSystemUserRoute>
+            <BusinessGroups />
           </PrivateSystemUserRoute>
         ),
       },

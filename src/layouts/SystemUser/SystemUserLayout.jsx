@@ -6,6 +6,7 @@ import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettin
 import PublicOutlinedIcon from "@mui/icons-material/PublicOutlined";
 import PeopleOutlineRoundedIcon from "@mui/icons-material/PeopleOutlineRounded";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
+import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
 import AdminSidebar from "../../components/AdminSidebar";
 import AdminHeader from "../../components/AdminHeader";
 
@@ -25,6 +26,11 @@ const SYSTEM_USER_NAVIGATION = [
     segment: "businesses",
     title: "Businesses",
     icon: <StorefrontOutlinedIcon />,
+  },
+  {
+    segment: "business-groups",
+    title: "Business Groups",
+    icon: <BusinessRoundedIcon />,
   },
   {
     segment: "roles",
