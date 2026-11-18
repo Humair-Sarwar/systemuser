@@ -541,9 +541,9 @@ export const getSystemBusinessesApi = async (params) => {
     }
 };
 
-export const getBusinessFormOptionsApi = async () => {
+export const getBusinessFormOptionsApi = async (params = {}) => {
     try {
-        const response = await api.get('/api/systemuser/businesses/form-options');
+        const response = await api.get('/api/systemuser/businesses/form-options', { params });
         return response;
     } catch (error) {
         return error;
@@ -562,6 +562,15 @@ export const getSystemBusinessDetailApi = async (id) => {
 export const createSystemBusinessApi = async (data) => {
     try {
         const response = await api.post('/api/systemuser/businesses', data);
+        return response;
+    } catch (error) {
+        return error;
+    }
+};
+
+export const getSchemaProgressApi = async (schemaName) => {
+    try {
+        const response = await api.get(`/api/systemuser/businesses/schema-progress/${encodeURIComponent(schemaName)}`);
         return response;
     } catch (error) {
         return error;

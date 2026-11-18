@@ -20,7 +20,6 @@ import {
   MenuItem,
   Drawer,
   Divider,
-  Grid,
   Card,
   Avatar,
   Autocomplete,
@@ -931,49 +930,68 @@ export default function BusinessGroups() {
                     Created: {selectedGroup.created_formatted}
                   </Typography>
 
-                  {/* 4 Stat Boxes inside Card */}
-                  <Grid container spacing={1.5}>
-                    <Grid item xs={3}>
-                      <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: "#f8fafc", border: "1px solid #e2e8f0", textAlign: "center" }}>
-                        <Typography sx={{ color: "#64748b", fontSize: "11.5px", fontWeight: 600, mb: 0.3 }}>
-                          Businesses
+                  {/* 4 Stat Boxes inside Card - Full Width Responsive Grid */}
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "repeat(2, minmax(0, 1fr))",
+                        sm: "repeat(4, minmax(0, 1fr))",
+                      },
+                      gap: 1.5,
+                      width: "100%",
+                    }}
+                  >
+                    {[
+                      {
+                        label: "Businesses",
+                        value: selectedGroup.metrics?.businesses_count || selectedGroup.businesses?.length || 0,
+                        color: "#0f172a",
+                        bgcolor: "#f8fafc",
+                        borderColor: "#e2e8f0",
+                      },
+                      {
+                        label: "Active",
+                        value: selectedGroup.metrics?.active_businesses_count || 0,
+                        color: "#16a34a",
+                        bgcolor: "#f0fdf4",
+                        borderColor: "#bbf7d0",
+                      },
+                      {
+                        label: "Blocked",
+                        value: selectedGroup.metrics?.blocked_businesses_count || 0,
+                        color: "#ef4444",
+                        bgcolor: "#fef2f2",
+                        borderColor: "#fecaca",
+                      },
+                      {
+                        label: "Owners",
+                        value: selectedGroup.metrics?.owners_count || selectedGroup.business_owners?.length || 0,
+                        color: "#0f172a",
+                        bgcolor: "#f8fafc",
+                        borderColor: "#e2e8f0",
+                      },
+                    ].map((stat) => (
+                      <Box
+                        key={stat.label}
+                        sx={{
+                          py: 1.6,
+                          px: 1.25,
+                          borderRadius: "10px",
+                          bgcolor: stat.bgcolor,
+                          border: `1px solid ${stat.borderColor}`,
+                          textAlign: "center",
+                        }}
+                      >
+                        <Typography sx={{ color: "#64748b", fontSize: "12px", fontWeight: 600, mb: 0.4 }}>
+                          {stat.label}
                         </Typography>
-                        <Typography sx={{ fontWeight: 700, fontSize: "18px", color: "#0f172a" }}>
-                          {selectedGroup.metrics?.businesses_count || selectedGroup.businesses?.length || 0}
+                        <Typography sx={{ fontWeight: 700, fontSize: "20px", lineHeight: 1.2, color: stat.color }}>
+                          {stat.value}
                         </Typography>
                       </Box>
-                    </Grid>
-                    <Grid item xs={3}>
-                      <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: "#f8fafc", border: "1px solid #e2e8f0", textAlign: "center" }}>
-                        <Typography sx={{ color: "#64748b", fontSize: "11.5px", fontWeight: 600, mb: 0.3 }}>
-                          Active
-                        </Typography>
-                        <Typography sx={{ fontWeight: 700, fontSize: "18px", color: "#16a34a" }}>
-                          {selectedGroup.metrics?.active_businesses_count || 0}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={3}>
-                      <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: "#f8fafc", border: "1px solid #e2e8f0", textAlign: "center" }}>
-                        <Typography sx={{ color: "#64748b", fontSize: "11.5px", fontWeight: 600, mb: 0.3 }}>
-                          Blocked
-                        </Typography>
-                        <Typography sx={{ fontWeight: 700, fontSize: "18px", color: "#ef4444" }}>
-                          {selectedGroup.metrics?.blocked_businesses_count || 0}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={3}>
-                      <Box sx={{ p: 1.5, borderRadius: "10px", bgcolor: "#f8fafc", border: "1px solid #e2e8f0", textAlign: "center" }}>
-                        <Typography sx={{ color: "#64748b", fontSize: "11.5px", fontWeight: 600, mb: 0.3 }}>
-                          Owners
-                        </Typography>
-                        <Typography sx={{ fontWeight: 700, fontSize: "18px", color: "#0f172a" }}>
-                          {selectedGroup.metrics?.owners_count || selectedGroup.business_owners?.length || 0}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
+                    ))}
+                  </Box>
                 </Card>
 
                 {/* Card 2: Group Owner */}

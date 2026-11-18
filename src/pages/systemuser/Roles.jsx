@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Box,
   Typography,
@@ -54,10 +54,50 @@ import {
 import { handleError, handleSuccess } from "../../toast";
 import { ROLE_PRIVILEGE_GROUPS } from "./rolePrivilegesData";
 
+const FastRoleTextField = React.memo(function FastRoleTextField({
+  field,
+  value,
+  formValuesRef,
+  onCommit,
+  touchedField,
+  ...props
+}) {
+  const [localValue, setLocalValue] = useState(value ?? "");
+
+  useEffect(() => {
+    setLocalValue(value ?? "");
+  }, [value]);
+
+  const handleLocalChange = (e) => {
+    const val = e.target.value;
+    setLocalValue(val);
+    if (formValuesRef?.current) {
+      formValuesRef.current[field] = val;
+    }
+    if (props.error || (touchedField && val.trim() === "")) {
+      onCommit?.(field, val);
+    }
+  };
+
+  const handleLocalBlur = () => {
+    onCommit?.(field, localValue);
+  };
+
+  return (
+    <TextField
+      {...props}
+      value={localValue}
+      onChange={handleLocalChange}
+      onBlur={handleLocalBlur}
+    />
+  );
+});
+
 const Roles = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRoles, setTotalRoles] = useState(0);
@@ -75,10 +115,12 @@ const Roles = () => {
     description: "",
   });
   const [selectedPermissions, setSelectedPermissions] = useState([]);
-  const [formErrors, setFormErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const formValuesRef = useRef({ title: "", description: "" });
   const [submitting, setSubmitting] = useState(false);
 
   // In-drawer search filter for privileges
+  const [privilegeFilterInput, setPrivilegeFilterInput] = useState("");
   const [privilegeFilter, setPrivilegeFilter] = useState("");
 
   // Dialog state: Delete
@@ -146,8 +188,22 @@ const Roles = () => {
   );
 
   useEffect(() => {
-    fetchRoles(currentPage, searchTerm);
-  }, [fetchRoles, currentPage, searchTerm]);
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPrivilegeFilter(privilegeFilterInput);
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [privilegeFilterInput]);
+
+  useEffect(() => {
+    fetchRoles(currentPage, debouncedSearchTerm);
+  }, [fetchRoles, currentPage, debouncedSearchTerm]);
 
   // Search handler
   const handleSearchChange = (e) => {
@@ -159,16 +215,21 @@ const Roles = () => {
     setCurrentPage(value);
   };
 
+  const commitFieldValue = useCallback((field, val) => {
+    setFormData((prev) => ({ ...prev, [field]: val }));
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  }, []);
+
   // Open Create Drawer
   const handleOpenCreate = () => {
     setModalMode("create");
     setSelectedRole(null);
-    setFormData({
-      title: "",
-      description: "",
-    });
+    const initial = { title: "", description: "" };
+    setFormData(initial);
+    formValuesRef.current = { ...initial };
     setSelectedPermissions([]);
-    setFormErrors({});
+    setTouched({});
+    setPrivilegeFilterInput("");
     setPrivilegeFilter("");
     setOpenModal(true);
   };
@@ -177,13 +238,16 @@ const Roles = () => {
   const handleOpenEdit = (role) => {
     setModalMode("edit");
     setSelectedRole(role);
-    setFormData({
+    const initial = {
       title: role.title || "",
       description: role.description || "",
-    });
+    };
+    setFormData(initial);
+    formValuesRef.current = { ...initial };
     const existing = Array.isArray(role.permissions) ? role.permissions : [];
     setSelectedPermissions(existing);
-    setFormErrors({});
+    setTouched({});
+    setPrivilegeFilterInput("");
     setPrivilegeFilter("");
     setOpenModal(true);
   };
@@ -219,15 +283,19 @@ const Roles = () => {
     setSelectedPermissions([]);
   };
 
-  // Validate form
-  const validateForm = () => {
-    const errors = {};
-    if (!formData.title.trim()) {
-      errors.title = "Role title is required";
-    }
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+  // Custom validation matching POS Quick Add Product
+  const computeErrors = (data) => {
+    const trimmedTitle = String(data?.title || "").trim();
+    return {
+      title: !trimmedTitle
+        ? "Role title is required"
+        : trimmedTitle.length < 2
+          ? "Role title must be at least 2 characters"
+          : "",
+    };
   };
+
+  const errors = computeErrors(formData);
 
   // Broadcast role privilege synchronization event across tabs and vendors
   const triggerRoleSyncBroadcast = (roleId) => {
@@ -247,13 +315,22 @@ const Roles = () => {
 
   // Save (Create or Update)
   const handleSaveRole = async () => {
-    if (!validateForm()) return;
+    const latest = { ...formData, ...formValuesRef.current };
+    setFormData(latest);
+    setTouched({ title: true, description: true });
+
+    const latestErrors = computeErrors(latest);
+    const firstError = Object.values(latestErrors).find((err) => Boolean(err));
+    if (firstError) {
+      handleError(firstError);
+      return;
+    }
 
     try {
       setSubmitting(true);
       const payload = {
-        title: formData.title,
-        description: formData.description,
+        title: String(latest.title || "").trim(),
+        description: String(latest.description || "").trim(),
         permissions: selectedPermissions,
       };
 
@@ -1128,17 +1205,17 @@ const Roles = () => {
               <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#1e293b", mb: 0.75 }}>
                 Role Name <span style={{ color: "#ef4444" }}>*</span>
               </Typography>
-              <TextField
+              <FastRoleTextField
                 fullWidth
                 size="small"
+                field="title"
                 placeholder="e.g. POS Access, Store Manager, Web Admin"
                 value={formData.title}
-                onChange={(e) => {
-                  setFormData({ ...formData, title: e.target.value });
-                  if (formErrors.title) setFormErrors({ ...formErrors, title: null });
-                }}
-                error={Boolean(formErrors.title)}
-                helperText={formErrors.title}
+                formValuesRef={formValuesRef}
+                onCommit={commitFieldValue}
+                touchedField={touched.title}
+                error={Boolean(touched.title && errors.title)}
+                helperText={touched.title && errors.title ? errors.title : ""}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "10px",
@@ -1159,12 +1236,15 @@ const Roles = () => {
               <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#1e293b", mb: 0.75 }}>
                 Description
               </Typography>
-              <TextField
+              <FastRoleTextField
                 fullWidth
                 size="small"
+                field="description"
                 placeholder="Provide a short description of the responsibilities and scope of this role..."
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                formValuesRef={formValuesRef}
+                onCommit={commitFieldValue}
+                touchedField={touched.description}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "10px",
@@ -1202,8 +1282,8 @@ const Roles = () => {
                 fullWidth
                 size="small"
                 placeholder="Filter privileges by keyword (e.g. pos, orders, stock)..."
-                value={privilegeFilter}
-                onChange={(e) => setPrivilegeFilter(e.target.value)}
+                value={privilegeFilterInput}
+                onChange={(e) => setPrivilegeFilterInput(e.target.value)}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "9px",
@@ -1224,7 +1304,7 @@ const Roles = () => {
                   ),
                   endAdornment: privilegeFilter ? (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setPrivilegeFilter("")} sx={{ p: 0.5 }}>
+                      <IconButton size="small" onClick={() => { setPrivilegeFilterInput(""); setPrivilegeFilter(""); }} sx={{ p: 0.5 }}>
                         <ClearRoundedIcon sx={{ fontSize: 16 }} />
                       </IconButton>
                     </InputAdornment>
@@ -1307,7 +1387,7 @@ const Roles = () => {
               <Button
                 size="small"
                 variant="outlined"
-                onClick={() => setPrivilegeFilter("")}
+                onClick={() => { setPrivilegeFilterInput(""); setPrivilegeFilter(""); }}
                 sx={{ textTransform: "none", borderRadius: "8px" }}
               >
                 Clear Filter

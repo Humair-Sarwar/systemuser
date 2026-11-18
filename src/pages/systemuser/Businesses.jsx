@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Box,
   Typography,
@@ -32,8 +32,6 @@ import {
   Card,
   Avatar,
   Collapse,
-  Autocomplete,
-  Select,
   Dialog,
   DialogContent,
   LinearProgress,
@@ -65,134 +63,15 @@ import {
   getSystemBusinessesApi,
   getBusinessFormOptionsApi,
   createSystemBusinessApi,
+  getSchemaProgressApi,
   updateSystemBusinessApi,
   toggleBlockBusinessApi,
   deleteSystemBusinessApi,
 } from "../../utils/apis/APIs";
 import { handleError, handleSuccess } from "../../toast";
-
-// Self-contained high-res SVG flag renderer so true graphical flags display on all OS (including Windows)
-const CountryFlag = ({ code, width = 24, height = 16 }) => {
-  switch (code) {
-    case "+44": // United Kingdom Union Jack (Matches user reference image)
-      return (
-        <svg
-          width={width}
-          height={height}
-          viewBox="0 0 60 30"
-          style={{ borderRadius: 3, display: "inline-block", verticalAlign: "middle", boxShadow: "0 0 1px rgba(0,0,0,0.3)" }}
-        >
-          <clipPath id="uk-clip">
-            <path d="M0,0 v30 h60 v-30 z" />
-          </clipPath>
-          <g clipPath="url(#uk-clip)">
-            <path d="M0,0 v30 h60 v-30 z" fill="#012169" />
-            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#ffffff" strokeWidth="6" />
-            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4" />
-            <path d="M30,0 v30 M0,15 h60" stroke="#ffffff" strokeWidth="10" />
-            <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6" />
-          </g>
-        </svg>
-      );
-    case "+92": // Pakistan
-      return (
-        <svg
-          width={width}
-          height={height}
-          viewBox="0 0 60 40"
-          style={{ borderRadius: 3, display: "inline-block", verticalAlign: "middle", boxShadow: "0 0 1px rgba(0,0,0,0.3)" }}
-        >
-          <rect width="15" height="40" fill="#ffffff" />
-          <rect x="15" width="45" height="40" fill="#01411C" />
-          <circle cx="38" cy="20" r="10" fill="#ffffff" />
-          <circle cx="41" cy="18" r="9" fill="#01411C" />
-          <polygon points="41,13 42,16 45,16 42.5,18 43.5,21 41,19 38.5,21 39.5,18 37,16 40,16" fill="#ffffff" />
-        </svg>
-      );
-    case "+1": // USA / Canada
-      return (
-        <svg
-          width={width}
-          height={height}
-          viewBox="0 0 60 32"
-          style={{ borderRadius: 3, display: "inline-block", verticalAlign: "middle", boxShadow: "0 0 1px rgba(0,0,0,0.3)" }}
-        >
-          <rect width="60" height="32" fill="#B22234" />
-          <rect y="2.5" width="60" height="2.5" fill="#ffffff" />
-          <rect y="7.5" width="60" height="2.5" fill="#ffffff" />
-          <rect y="12.5" width="60" height="2.5" fill="#ffffff" />
-          <rect y="17.5" width="60" height="2.5" fill="#ffffff" />
-          <rect y="22.5" width="60" height="2.5" fill="#ffffff" />
-          <rect y="27.5" width="60" height="2.5" fill="#ffffff" />
-          <rect width="24" height="17.5" fill="#3C3B6E" />
-        </svg>
-      );
-    case "+971": // UAE
-      return (
-        <svg
-          width={width}
-          height={height}
-          viewBox="0 0 60 30"
-          style={{ borderRadius: 3, display: "inline-block", verticalAlign: "middle", boxShadow: "0 0 1px rgba(0,0,0,0.3)" }}
-        >
-          <rect width="60" height="10" fill="#00732f" />
-          <rect y="10" width="60" height="10" fill="#ffffff" />
-          <rect y="20" width="60" height="10" fill="#000000" />
-          <rect width="15" height="30" fill="#ff0000" />
-        </svg>
-      );
-    case "+966": // Saudi Arabia
-      return (
-        <svg
-          width={width}
-          height={height}
-          viewBox="0 0 60 40"
-          style={{ borderRadius: 3, display: "inline-block", verticalAlign: "middle", boxShadow: "0 0 1px rgba(0,0,0,0.3)" }}
-        >
-          <rect width="60" height="40" fill="#006C35" />
-          <rect x="15" y="24" width="30" height="3" fill="#ffffff" rx="1" />
-        </svg>
-      );
-    case "+49": // Germany
-      return (
-        <svg
-          width={width}
-          height={height}
-          viewBox="0 0 60 36"
-          style={{ borderRadius: 3, display: "inline-block", verticalAlign: "middle", boxShadow: "0 0 1px rgba(0,0,0,0.3)" }}
-        >
-          <rect width="60" height="12" fill="#000000" />
-          <rect y="12" width="60" height="12" fill="#DD0000" />
-          <rect y="24" width="60" height="12" fill="#FFCE00" />
-        </svg>
-      );
-    case "+33": // France
-      return (
-        <svg
-          width={width}
-          height={height}
-          viewBox="0 0 60 40"
-          style={{ borderRadius: 3, display: "inline-block", verticalAlign: "middle", boxShadow: "0 0 1px rgba(0,0,0,0.3)" }}
-        >
-          <rect width="20" height="40" fill="#002654" />
-          <rect x="20" width="20" height="40" fill="#ffffff" />
-          <rect x="40" width="20" height="40" fill="#ED2939" />
-        </svg>
-      );
-    default:
-      return <span style={{ fontSize: "14px" }}>🌐</span>;
-  }
-};
-
-const DIAL_CODES = [
-  { code: "+44", name: "United Kingdom (+44)" },
-  { code: "+92", name: "Pakistan (+92)" },
-  { code: "+1", name: "US / Canada (+1)" },
-  { code: "+971", name: "UAE (+971)" },
-  { code: "+966", name: "Saudi Arabia (+966)" },
-  { code: "+49", name: "Germany (+49)" },
-  { code: "+33", name: "France (+33)" },
-];
+import AsyncSearchAutocomplete from "../../components/AsyncSearchAutocomplete";
+import PhoneDialPicker from "../../components/PhoneDialPicker";
+import { CountryFlag } from "../../utils/countryDialData";
 
 // Service options mapping: "Own site" removed as requested
 const SERVICE_OPTIONS = [
@@ -202,6 +81,8 @@ const SERVICE_OPTIONS = [
   { id: "pos", label: "POS" },
   { id: "on_store", label: "On Store" },
 ];
+
+const REQUIRED_CORE_SERVICES = ["sale", "trade_in", "repair"];
 
 // Schema Creation Progress Steps
 const SCHEMA_STEPS = [
@@ -217,7 +98,6 @@ const modernInputStyles = {
     borderRadius: "10px",
     backgroundColor: "#ffffff",
     fontSize: "13.5px",
-    transition: "all 0.2s ease-in-out",
     "& fieldset": {
       borderColor: "#cbd5e1",
     },
@@ -246,8 +126,10 @@ const INITIAL_FORM_DATA = {
   business_type: "Electronics Store",
   email: "",
   mobile_dial: "+44",
+  mobile_iso: "gb",
   mobile_no: "",
   whatsapp_dial: "+44",
+  whatsapp_iso: "gb",
   whatsapp_no: "",
   website_option: "system", // Radio: 'system' or 'personal'
   website_url: "",
@@ -269,6 +151,138 @@ const INITIAL_FORM_DATA = {
   description: "",
   business_group_id: "",
 };
+
+// Isolated memoized TextField so typing in any input never re-renders the Businesses table or sibling fields
+const FastTextField = React.memo(function FastTextField({
+  field,
+  formValuesRef,
+  value,
+  touched,
+  error,
+  onCommit,
+  validateFnRef,
+  onErrorChange,
+  ...textFieldProps
+}) {
+  const [localVal, setLocalVal] = useState(value ?? "");
+
+  useEffect(() => {
+    setLocalVal(value ?? "");
+    if (formValuesRef?.current) {
+      formValuesRef.current[field] = value ?? "";
+    }
+  }, [value, field, formValuesRef]);
+
+  const handleChange = (e) => {
+    const nextVal = e.target.value;
+    setLocalVal(nextVal);
+    if (formValuesRef?.current) {
+      formValuesRef.current[field] = nextVal;
+    }
+    if (touched && validateFnRef?.current && onErrorChange) {
+      const nextErr = validateFnRef.current(field, nextVal, {
+        ...(formValuesRef?.current || {}),
+        [field]: nextVal,
+      });
+      onErrorChange(field, nextErr);
+    }
+  };
+
+  return (
+    <TextField
+      {...textFieldProps}
+      value={localVal}
+      onChange={handleChange}
+      onBlur={() => onCommit?.(field, localVal)}
+      error={Boolean(error && touched)}
+      helperText={touched ? error : textFieldProps.helperText}
+    />
+  );
+});
+
+// Isolated memoized Schema Name field with instant local availability feedback
+const SchemaNameField = React.memo(function SchemaNameField({
+  formValuesRef,
+  value,
+  touched,
+  error,
+  existingSchemas,
+  onCommit,
+  onErrorChange,
+}) {
+  const [localVal, setLocalVal] = useState(value ?? "");
+  const [localSchemaErr, setLocalSchemaErr] = useState(error || "");
+
+  const computeSchemaErr = useCallback(
+    (rawVal) => {
+      const val = (rawVal || "").trim().toLowerCase();
+      if (!val) return "Schema name is required";
+      const sanitized = val.replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
+      const exists = (existingSchemas || []).some(
+        (s) => s.toLowerCase() === val || s.toLowerCase() === sanitized
+      );
+      return exists ? `The schema "${val}" already exists.` : "";
+    },
+    [existingSchemas]
+  );
+
+  useEffect(() => {
+    const v = value ?? "";
+    setLocalVal(v);
+    if (formValuesRef?.current) {
+      formValuesRef.current.schema_name = v;
+    }
+    setLocalSchemaErr(error || (v ? computeSchemaErr(v) : ""));
+  }, [value, error, formValuesRef, computeSchemaErr]);
+
+  const handleChange = (e) => {
+    const nextVal = e.target.value;
+    setLocalVal(nextVal);
+    if (formValuesRef?.current) {
+      formValuesRef.current.schema_name = nextVal;
+    }
+    const nextErr = computeSchemaErr(nextVal);
+    setLocalSchemaErr(nextErr);
+    if (touched && onErrorChange) {
+      onErrorChange("schema_name", nextErr);
+    }
+  };
+
+  const displayError = touched ? localSchemaErr || error : "";
+
+  return (
+    <Box sx={{ pl: 4, pt: 1, maxWidth: "480px" }}>
+      <TextField
+        fullWidth
+        size="small"
+        label="New schema name *"
+        placeholder="e.g. humair_sarwar, shop_schema"
+        value={localVal}
+        onChange={handleChange}
+        onBlur={() => onCommit?.("schema_name", localVal)}
+        error={Boolean(displayError)}
+        helperText={displayError}
+        sx={modernInputStyles}
+        InputProps={{
+          endAdornment: localVal ? (
+            <InputAdornment position="end">
+              {localSchemaErr ? (
+                <CloseRoundedIcon sx={{ color: "#dc2626", fontSize: 20 }} />
+              ) : (
+                <CheckCircleOutlineRoundedIcon sx={{ color: "#16a34a", fontSize: 20 }} />
+              )}
+            </InputAdornment>
+          ) : null,
+        }}
+      />
+      {!localSchemaErr && localVal && (
+        <Typography sx={{ fontSize: "11.5px", color: "#16a34a", mt: 0.5 }}>
+          This name is free. When you save, this schema is registered and migrations can be applied.
+        </Typography>
+      )}
+    </Box>
+  );
+});
 
 export default function Businesses() {
   const [businesses, setBusinesses] = useState([]);
@@ -304,8 +318,10 @@ export default function Businesses() {
 
   // Drawer states
   const [formDrawerOpen, setFormDrawerOpen] = useState(false);
+  const [formSessionKey, setFormSessionKey] = useState(0);
   const [editingBusiness, setEditingBusiness] = useState(null);
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
+  const formValuesRef = useRef({});
   const [formSubmitting, setFormSubmitting] = useState(false);
 
   // Live validation errors
@@ -318,8 +334,8 @@ export default function Businesses() {
     switch (field) {
       case "services": {
         const val = value !== undefined ? value : allData.services;
-        if (!Array.isArray(val) || val.length === 0) {
-          error = "Please select at least one enabled service";
+        if (!Array.isArray(val) || !val.some((s) => REQUIRED_CORE_SERVICES.includes(s))) {
+          error = "Please select at least one of Sale, Trade-in, or Repair";
         }
         break;
       }
@@ -404,7 +420,7 @@ export default function Businesses() {
     return error;
   };
 
-  const validateAll = () => {
+  const validateAll = (data = formData) => {
     const fields = [
       "services",
       "name",
@@ -418,7 +434,7 @@ export default function Businesses() {
     ];
 
     // Only validate schema_name when creating a brand new business with schema_type === "new"
-    if (!editingBusiness && formData.schema_type === "new") {
+    if (!editingBusiness && data.schema_type === "new") {
       fields.push("schema_name");
     }
 
@@ -426,7 +442,7 @@ export default function Businesses() {
     const touched = {};
     fields.forEach((f) => {
       touched[f] = true;
-      const err = validateField(f, formData[f]);
+      const err = validateField(f, data[f], data);
       if (err) errors[f] = err;
     });
     setFormTouched((prev) => ({ ...prev, ...touched }));
@@ -434,25 +450,45 @@ export default function Businesses() {
     return Object.keys(errors).length === 0;
   };
 
+  const validateFieldRef = useRef(null);
+  validateFieldRef.current = validateField;
+
+  const commitFieldValue = useCallback((field, val) => {
+    if (formValuesRef.current) {
+      formValuesRef.current[field] = val;
+    }
+    setFormData((prev) => (prev[field] === val ? prev : { ...prev, [field]: val }));
+    setFormTouched((prev) => (prev[field] ? prev : { ...prev, [field]: true }));
+    const err = validateFieldRef.current(field, val, {
+      ...formValuesRef.current,
+      [field]: val,
+    });
+    setFormErrors((prev) => (prev[field] === err ? prev : { ...prev, [field]: err }));
+  }, []);
+
+  const handleFastErrorChange = useCallback((field, err) => {
+    setFormErrors((prev) => (prev[field] === err ? prev : { ...prev, [field]: err }));
+  }, []);
+
   const handleFieldChange = (field, value) => {
     setFormData((prev) => {
       const next = { ...prev, [field]: value };
       if (formTouched[field]) {
         const err = validateField(field, value, next);
-        setFormErrors((prevErr) => ({ ...prevErr, [field]: err }));
+        setFormErrors((prevErr) => (prevErr[field] === err ? prevErr : { ...prevErr, [field]: err }));
       }
       return next;
     });
   };
 
   const handleBlur = (field) => {
-    setFormTouched((prev) => ({ ...prev, [field]: true }));
+    setFormTouched((prev) => (prev[field] ? prev : { ...prev, [field]: true }));
     const err = validateField(field, formData[field]);
-    setFormErrors((prev) => ({ ...prev, [field]: err }));
+    setFormErrors((prev) => (prev[field] === err ? prev : { ...prev, [field]: err }));
   };
 
   // Schema creation progress popup states
-  const TOTAL_MIGRATIONS = 492;
+  const TOTAL_MIGRATIONS = 22;
   const [schemaProgressOpen, setSchemaProgressOpen] = useState(false);
   const [schemaMigrationCount, setSchemaMigrationCount] = useState(0);
   const [schemaProgressPercent, setSchemaProgressPercent] = useState(0);
@@ -469,10 +505,12 @@ export default function Businesses() {
 
   // Expanded owner cards in 'by_owner' mode
   const [expandedOwners, setExpandedOwners] = useState({});
+  const [loadingOptions, setLoadingOptions] = useState(false);
 
   // Fetch form options (owners, roles, countries, cities, etc.)
   const fetchFormOptions = async () => {
     try {
+      setLoadingOptions(true);
       const res = await getBusinessFormOptionsApi();
       if (res && res.status === 200 && res.data?.status === true) {
         setFormOptions({
@@ -488,6 +526,8 @@ export default function Businesses() {
       }
     } catch (err) {
       console.error("Failed to fetch business form options", err);
+    } finally {
+      setLoadingOptions(false);
     }
   };
 
@@ -537,9 +577,20 @@ export default function Businesses() {
     [perPage]
   );
 
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [deleteConfirmBusiness, setDeleteConfirmBusiness] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   useEffect(() => {
-    fetchBusinesses(currentPage, activeTab, search, ownerFilter, schemaFilter, viewMode);
-  }, [fetchBusinesses, currentPage, activeTab, search, ownerFilter, schemaFilter, viewMode]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    fetchBusinesses(currentPage, activeTab, debouncedSearch, ownerFilter, schemaFilter, viewMode);
+  }, [fetchBusinesses, currentPage, activeTab, debouncedSearch, ownerFilter, schemaFilter, viewMode]);
 
   // Tab change
   const handleTabChange = (tab) => {
@@ -572,41 +623,121 @@ export default function Businesses() {
   // Delete or Restore
   const handleDeleteOrRestore = async (business) => {
     try {
+      setDeleteLoading(true);
       const res = await deleteSystemBusinessApi(business.id);
       if (res && res.status === 200 && res.data?.status === true) {
         handleSuccess(res.data.message || "Operation successful");
-        fetchBusinesses(currentPage, activeTab, search, ownerFilter, schemaFilter, viewMode);
+        setDeleteConfirmBusiness(null);
+        fetchBusinesses(currentPage, activeTab, debouncedSearch, ownerFilter, schemaFilter, viewMode);
       } else {
         handleError("Operation failed");
       }
     } catch (err) {
       handleError("An error occurred");
+    } finally {
+      setDeleteLoading(false);
     }
   };
+
+  // Selected full option metadata for async search fields (preserves label across searches & edit mode)
+  const [selectedMeta, setSelectedMeta] = useState({
+    owner: null,
+    group: null,
+    city: null,
+    country: null,
+  });
+
+  const latestCountryIdRef = useRef(formData.country_id);
+  latestCountryIdRef.current = formData.country_id;
+
+  const fetchOwnerOptions = useCallback(async (q = "") => {
+    const res = await getBusinessFormOptionsApi({ scope: "owners", owner_search: q });
+    return res?.data?.data?.owners || [];
+  }, []);
+
+  const fetchGroupOptions = useCallback(async (q = "") => {
+    const res = await getBusinessFormOptionsApi({ scope: "groups", group_search: q });
+    return res?.data?.data?.business_groups || [];
+  }, []);
+
+  const fetchCountryOptions = useCallback(async (q = "") => {
+    const res = await getBusinessFormOptionsApi({ scope: "countries", country_search: q });
+    return res?.data?.data?.countries || [];
+  }, []);
+
+  const fetchCityOptions = useCallback(async (q = "") => {
+    const params = { scope: "cities", city_search: q };
+    if (latestCountryIdRef.current) {
+      params.country_id = latestCountryIdRef.current;
+    }
+    const res = await getBusinessFormOptionsApi(params);
+    return res?.data?.data?.cities || [];
+  }, []);
+
+  const businessTypeOptions = useMemo(() => {
+    const list = formOptions.business_types || [];
+    const current = formData.business_type;
+    const merged = current && !list.includes(current) ? [current, ...list] : list;
+    return merged.map((t) => ({ id: t, label: t }));
+  }, [formOptions.business_types, formData.business_type]);
 
   // Open Create Drawer
   const handleOpenCreateDrawer = () => {
     setEditingBusiness(null);
+    formValuesRef.current = {};
+    setSelectedMeta({ owner: null, group: null, city: null, country: null });
     setFormData(INITIAL_FORM_DATA);
     setFormErrors({});
     setFormTouched({});
+    setFormSessionKey((k) => k + 1);
     setFormDrawerOpen(true);
+    fetchFormOptions();
   };
 
   // Open Edit Drawer
   const handleOpenEditDrawer = (business) => {
     setEditingBusiness(business);
+    formValuesRef.current = {};
     setFormErrors({});
     setFormTouched({});
+    setFormSessionKey((k) => k + 1);
+    setSelectedMeta({
+      owner:
+        business.owner ||
+        (business.owner_id
+          ? {
+              id: business.owner_id,
+              first_name: business.owner_name || "Owner",
+              last_name: "",
+              email: business.owner_email || "",
+            }
+          : null),
+      group:
+        business.group ||
+        (business.business_group_id
+          ? { id: business.business_group_id, name: business.group_name || `Group #${business.business_group_id}` }
+          : null),
+      city:
+        business.city ||
+        (business.city_id
+          ? { id: business.city_id, name: business.city_name || "", country_id: business.country_id }
+          : null),
+      country:
+        business.country ||
+        (business.country_id
+          ? { id: business.country_id, name: business.country_name || "", currency: business.currency || "GBP" }
+          : null),
+    });
     setFormData({
       name: business.name || "",
       branch_name: business.branch_name || "",
       business_type: business.business_type || "Electronics Store",
       email: business.email || "",
       mobile_dial: "+44",
+      mobile_iso: "gb",
       mobile_no: business.mobile_no || "",
       whatsapp_dial: "+44",
-      whatsapp_no: business.whatsapp_no || "",
+      whatsapp_iso: "gb",
       website_option: business.is_personal_website ? "personal" : "system",
       website_url: business.website_url || "",
       package_level: business.package_level || "Basic",
@@ -628,6 +759,7 @@ export default function Businesses() {
       business_group_id: business.business_group_id || "",
     });
     setFormDrawerOpen(true);
+    fetchFormOptions();
   };
 
   // Open Detail Drawer
@@ -637,21 +769,124 @@ export default function Businesses() {
   };
 
   // Country change auto-sync currency
-  const handleCountryChange = (e) => {
-    const cId = e.target.value;
-    const selectedCountry = formOptions.countries.find((c) => c.id === cId);
+  const handleCountrySelect = useCallback((selectedCountry) => {
+    const cId = selectedCountry ? selectedCountry.id : "";
+    setSelectedMeta((prev) => ({ ...prev, country: selectedCountry || null }));
     setFormData((prev) => {
       const next = {
         ...prev,
         country_id: cId,
         currency: selectedCountry?.currency || prev.currency,
       };
-      if (formTouched.country_id) {
-        setFormErrors((prevErr) => ({ ...prevErr, country_id: validateField("country_id", cId, next) }));
-      }
+      setFormTouched((t) => ({ ...t, country_id: true }));
+      setFormErrors((prevErr) => ({
+        ...prevErr,
+        country_id: validateFieldRef.current("country_id", cId, next),
+      }));
       return next;
     });
-  };
+  }, []);
+
+  const handleBusinessTypeSelect = useCallback((opt) => {
+    const val = opt ? (typeof opt === "string" ? opt : opt.id) : "";
+    setFormData((prev) => {
+      const next = { ...prev, business_type: val };
+      setFormTouched((t) => ({ ...t, business_type: true }));
+      setFormErrors((prevErr) => ({
+        ...prevErr,
+        business_type: validateFieldRef.current("business_type", val, next),
+      }));
+      return next;
+    });
+  }, []);
+
+  const handleOwnerSelect = useCallback(
+    (newValue) => {
+      const ownerId = newValue ? newValue.id : "";
+      setSelectedMeta((prev) => ({ ...prev, owner: newValue || null }));
+      setFormData((prev) => {
+        let suggestedSchema = prev.schema_name;
+        if (newValue && prev.schema_type === "new") {
+          suggestedSchema = `${(newValue.first_name || "").toLowerCase()}_${(newValue.last_name || "").toLowerCase()}`.replace(/\s+/g, "_");
+        } else if (prev.schema_type === "existing" && (!prev.schema_name || prev.schema_name === "public")) {
+          suggestedSchema = formOptions.existing_schemas.find((s) => s !== "public") || "public";
+        }
+        const next = {
+          ...prev,
+          owner_id: ownerId,
+          schema_name: suggestedSchema,
+        };
+        setFormTouched((t) => ({ ...t, owner_id: true }));
+        setFormErrors((prevErr) => ({
+          ...prevErr,
+          owner_id: validateFieldRef.current("owner_id", ownerId, next),
+        }));
+        return next;
+      });
+    },
+    [formOptions.existing_schemas]
+  );
+
+  const handleRoleSelect = useCallback((selectedRole) => {
+    const rId = selectedRole ? selectedRole.id : "";
+    setFormData((prev) => {
+      const next = { ...prev, role_id: rId };
+      setFormTouched((t) => ({ ...t, role_id: true }));
+      setFormErrors((prevErr) => ({
+        ...prevErr,
+        role_id: validateFieldRef.current("role_id", rId, next),
+      }));
+      return next;
+    });
+  }, []);
+
+  const handleGroupSelect = useCallback((selectedGroup) => {
+    setSelectedMeta((prev) => ({ ...prev, group: selectedGroup || null }));
+    setFormData((prev) => ({
+      ...prev,
+      business_group_id: selectedGroup ? selectedGroup.id : "",
+    }));
+  }, []);
+
+  const handleCitySelect = useCallback((selectedCity) => {
+    const selectedId = selectedCity ? selectedCity.id : "";
+    const nextCityName = selectedCity ? selectedCity.name : "";
+    setSelectedMeta((prev) => ({
+      ...prev,
+      city: selectedCity || null,
+      country: (!prev.country && selectedCity?.country) ? selectedCity.country : prev.country,
+    }));
+    setFormData((prev) => {
+      const autoCountryId = (!prev.country_id && selectedCity?.country_id) ? selectedCity.country_id : prev.country_id;
+      const autoCurrency = (!prev.country_id && selectedCity?.country?.currency) ? selectedCity.country.currency : prev.currency;
+      const next = {
+        ...prev,
+        city_id: selectedId,
+        city_name: nextCityName,
+        country_id: autoCountryId,
+        currency: autoCurrency,
+      };
+      setFormTouched((t) => ({ ...t, city_id: true }));
+      setFormErrors((prevErr) => ({
+        ...prevErr,
+        city_id: validateFieldRef.current("city_id", selectedId, next),
+      }));
+      return next;
+    });
+  }, []);
+
+  const handleCurrencySelect = useCallback((selectedCurrency) => {
+    if (!selectedCurrency) return;
+    setFormData((prev) => ({ ...prev, currency: selectedCurrency.code }));
+  }, []);
+
+  const handleMobileDialSelect = useCallback((country) => {
+    setFormData((prev) => ({ ...prev, mobile_dial: country.dialCode, mobile_iso: country.iso }));
+  }, []);
+
+  const handleWhatsappDialSelect = useCallback((country) => {
+    setFormData((prev) => ({ ...prev, whatsapp_dial: country.dialCode, whatsapp_iso: country.iso }));
+  }, []);
 
   // Service toggle checkbox
   const handleServiceToggle = (serviceId) => {
@@ -670,12 +905,12 @@ export default function Businesses() {
     });
   };
 
-  // Filter available cities based on selected country
-  const availableCities = formData.country_id
-    ? formOptions.cities.filter((c) => String(c.country_id) === String(formData.country_id)).length > 0
-      ? formOptions.cities.filter((c) => String(c.country_id) === String(formData.country_id))
-      : formOptions.cities
-    : formOptions.cities;
+  // Filter available cities based on selected country (memoized for fast input typing)
+  const availableCities = useMemo(() => {
+    if (!formData.country_id) return formOptions.cities;
+    const filtered = formOptions.cities.filter((c) => String(c.country_id) === String(formData.country_id));
+    return filtered.length > 0 ? filtered : formOptions.cities;
+  }, [formData.country_id, formOptions.cities]);
 
   // Close progress dialog and refresh view
   const handleCloseProgressDialog = () => {
@@ -689,19 +924,22 @@ export default function Businesses() {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
 
+    const latestData = { ...formData, ...formValuesRef.current };
+    setFormData(latestData);
+
     // Trigger full live validation check
-    const isValid = validateAll();
+    const isValid = validateAll(latestData);
     if (!isValid) {
       handleError("Please complete all required fields correctly.");
       return;
     }
 
-    const isPersonal = formData.website_option === "personal";
+    const isPersonal = latestData.website_option === "personal";
     const payload = {
-      ...formData,
+      ...latestData,
       is_system_website: !isPersonal,
       is_personal_website: isPersonal,
-      website_url: isPersonal ? formData.website_url : null,
+      website_url: isPersonal ? latestData.website_url : null,
     };
 
     // If Editing: standard update without schema provisioning dialog
@@ -725,26 +963,28 @@ export default function Businesses() {
       return;
     }
 
-    // If Creating with new schema: launch Schema Migration Progress Popup (matching user reference)
-    if (formData.schema_type === "new") {
+    // If Creating with new schema: launch Schema Migration Progress Popup with live backend polling
+    if (latestData.schema_type === "new") {
       let interval;
       try {
         setFormSubmitting(true);
         setSchemaProgressOpen(true);
         setSchemaProgressStatus("running");
         setSchemaProgressError("");
-        setSchemaMigrationCount(24);
-        setSchemaProgressPercent(5);
+        setSchemaMigrationCount(0);
+        setSchemaProgressPercent(0);
 
-        let currentCount = 24;
-        interval = setInterval(() => {
-          if (currentCount < 450) {
-            const step = Math.floor(Math.random() * 22) + 14;
-            currentCount = Math.min(currentCount + step, 450);
-            setSchemaMigrationCount(currentCount);
-            setSchemaProgressPercent(Math.round((currentCount / TOTAL_MIGRATIONS) * 100));
+        const targetSchema = latestData.schema_name;
+        interval = setInterval(async () => {
+          if (!targetSchema) return;
+          const progRes = await getSchemaProgressApi(targetSchema);
+          const prog = progRes?.data?.data;
+          if (prog && typeof prog.applied === "number") {
+            const total = prog.total || TOTAL_MIGRATIONS;
+            setSchemaMigrationCount(prog.applied);
+            setSchemaProgressPercent(Math.round((prog.applied / total) * 100));
           }
-        }, 200);
+        }, 250);
 
         const res = await createSystemBusinessApi(payload);
 
@@ -1486,7 +1726,7 @@ export default function Businesses() {
                                 <Tooltip title="Delete Business">
                                   <IconButton
                                     size="small"
-                                    onClick={() => handleDeleteOrRestore(biz)}
+                                    onClick={() => setDeleteConfirmBusiness(biz)}
                                     sx={{ color: "#ef4444", "&:hover": { backgroundColor: "#fef2f2" } }}
                                   >
                                     <DeleteOutlineIcon fontSize="small" />
@@ -1747,7 +1987,7 @@ export default function Businesses() {
 
           {/* Drawer Content Body */}
           <Box sx={{ p: { xs: 2, sm: 3 }, flexGrow: 1, overflowY: "auto" }}>
-            <Stack spacing={2.5}>
+            <Stack spacing={2.5} key={formSessionKey}>
               {/* SECTION 1: Website Configuration & Services */}
               <Card
                 elevation={0}
@@ -1795,12 +2035,18 @@ export default function Businesses() {
 
                       {/* If Personal Website is selected: show Website Url field */}
                       {formData.website_option === "personal" && (
-                        <TextField
+                        <FastTextField
+                          field="website_url"
+                          formValuesRef={formValuesRef}
+                          value={formData.website_url}
+                          touched={Boolean(formTouched.website_url)}
+                          error={formErrors.website_url}
+                          onCommit={commitFieldValue}
+                          validateFnRef={validateFieldRef}
+                          onErrorChange={handleFastErrorChange}
                           size="small"
                           label="Website Url"
                           placeholder="e.g. localhost:3000 or mydomain.com"
-                          value={formData.website_url}
-                          onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
                           sx={{ minWidth: "240px", ...modernInputStyles }}
                         />
                       )}
@@ -1828,9 +2074,12 @@ export default function Businesses() {
 
                   {/* Row 2: Enabled Services Checkboxes (DEFAULT ALL UNCHECKED, "Own site" removed) */}
                   <Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0.75, mb: 0.5 }}>
                       <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: formErrors.services && formTouched.services ? "#ef4444" : "#64748b" }}>
                         Enabled Services (Select applicable services) *
+                      </Typography>
+                      <Typography sx={{ fontSize: "11.5px", color: formErrors.services && formTouched.services ? "#ef4444" : "#94a3b8" }}>
+                        (At least one of Sale, Trade-in, or Repair is required)
                       </Typography>
                     </Box>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: { xs: 1.5, sm: 2.5 } }}>
@@ -1879,53 +2128,54 @@ export default function Businesses() {
                   {/* Row 1: Business Name, Business Type, Branch Name */}
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1.2 1 250px" } }}>
-                      <TextField
+                      <FastTextField
+                        field="name"
+                        formValuesRef={formValuesRef}
+                        value={formData.name}
+                        touched={Boolean(formTouched.name)}
+                        error={formErrors.name}
+                        onCommit={commitFieldValue}
+                        validateFnRef={validateFieldRef}
+                        onErrorChange={handleFastErrorChange}
                         fullWidth
                         size="small"
                         label="Business Name *"
                         placeholder="e.g. iTech, Coffee Shop"
-                        value={formData.name}
-                        onChange={(e) => handleFieldChange("name", e.target.value)}
-                        onBlur={() => handleBlur("name")}
-                        error={Boolean(formErrors.name && formTouched.name)}
-                        helperText={formTouched.name && formErrors.name}
                         sx={modernInputStyles}
                       />
                     </Box>
 
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 220px" } }}>
-                      <TextField
-                        select
-                        fullWidth
-                        size="small"
+                      <AsyncSearchAutocomplete
                         label="Business Type *"
-                        value={formData.business_type}
-                        onChange={(e) => handleFieldChange("business_type", e.target.value)}
+                        placeholder="Search business type..."
+                        valueId={formData.business_type}
+                        initialOptions={businessTypeOptions}
+                        getOptionId={(opt) => opt?.id ?? opt}
+                        getOptionLabel={(opt) => (typeof opt === "string" ? opt : opt?.label || "")}
+                        onChange={handleBusinessTypeSelect}
                         onBlur={() => handleBlur("business_type")}
                         error={Boolean(formErrors.business_type && formTouched.business_type)}
                         helperText={formTouched.business_type && formErrors.business_type}
+                        noOptionsText="No business type matched"
                         sx={modernInputStyles}
-                      >
-                        <MenuItem value="">Select Business Type</MenuItem>
-                        {formOptions.business_types.map((type) => (
-                          <MenuItem key={type} value={type}>
-                            {type}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
                     </Box>
 
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 200px" } }}>
-                      <TextField
+                      <FastTextField
+                        field="branch_name"
+                        formValuesRef={formValuesRef}
+                        value={formData.branch_name}
+                        touched={Boolean(formTouched.branch_name)}
+                        error={formErrors.branch_name}
+                        onCommit={commitFieldValue}
+                        validateFnRef={validateFieldRef}
+                        onErrorChange={handleFastErrorChange}
                         fullWidth
                         size="small"
                         label="Branch Name *"
                         placeholder="e.g. Main Branch, Test branch"
-                        value={formData.branch_name}
-                        onChange={(e) => handleFieldChange("branch_name", e.target.value)}
-                        onBlur={() => handleBlur("branch_name")}
-                        error={Boolean(formErrors.branch_name && formTouched.branch_name)}
-                        helperText={formTouched.branch_name && formErrors.branch_name}
                         sx={modernInputStyles}
                       />
                     </Box>
@@ -1934,66 +2184,51 @@ export default function Businesses() {
                   {/* Row 2: Business Email, Searchable Business Owner (Shows all users), Role (Shows all roles) */}
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 250px" } }}>
-                      <TextField
+                      <FastTextField
+                        field="email"
+                        formValuesRef={formValuesRef}
+                        value={formData.email}
+                        touched={Boolean(formTouched.email)}
+                        error={formErrors.email}
+                        onCommit={commitFieldValue}
+                        validateFnRef={validateFieldRef}
+                        onErrorChange={handleFastErrorChange}
                         fullWidth
                         size="small"
                         type="email"
                         label="Business Email *"
                         placeholder="e.g. info@business.com"
-                        value={formData.email}
-                        onChange={(e) => handleFieldChange("email", e.target.value)}
-                        onBlur={() => handleBlur("email")}
-                        error={Boolean(formErrors.email && formTouched.email)}
-                        helperText={formTouched.email && formErrors.email}
                         sx={modernInputStyles}
                       />
                     </Box>
 
-                    {/* Searchable Business Owner Autocomplete showing all users with their business name / no business yet */}
+                    {/* Live Backend Searchable Business Owner Autocomplete */}
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1.4 1 300px" } }}>
-                      <Autocomplete
-                        size="small"
+                      <AsyncSearchAutocomplete
+                        label="Business Owner *"
+                        placeholder="Type to search owner by name, email, phone..."
                         disabled={Boolean(editingBusiness)}
-                        options={formOptions.owners}
+                        valueId={formData.owner_id}
+                        initialOptions={formOptions.owners}
+                        selectedFallback={selectedMeta.owner}
+                        fetchOptions={fetchOwnerOptions}
                         getOptionLabel={(option) => {
                           if (!option) return "";
                           if (typeof option === "string") return option;
                           return `${option.first_name || ""} ${option.last_name || ""} (${option.email || ""})`.trim();
                         }}
-                        isOptionEqualToValue={(option, value) => {
-                          if (!option || !value) return false;
-                          const optId = option.id || option;
-                          const valId = value.id || value;
-                          return String(optId) === String(valId);
+                        localFilterFn={(opt, q) => {
+                          const name = `${opt.first_name || ""} ${opt.last_name || ""}`.toLowerCase();
+                          const email = (opt.email || "").toLowerCase();
+                          const biz = (opt.business_name || "").toLowerCase();
+                          const phone = (opt.phone || "").toLowerCase();
+                          return name.includes(q) || email.includes(q) || biz.includes(q) || phone.includes(q);
                         }}
-                        value={
-                          formOptions.owners.find((o) => String(o.id) === String(formData.owner_id)) ||
-                          (editingBusiness?.owner
-                            ? editingBusiness.owner
-                            : formData.owner_id
-                            ? { id: formData.owner_id, first_name: editingBusiness?.owner_name || "Owner", last_name: "", email: editingBusiness?.owner_email || "" }
-                            : null)
-                        }
-                        onChange={(event, newValue) => {
-                          const ownerId = newValue ? newValue.id : "";
-                          let suggestedSchema = formData.schema_name;
-                          if (newValue && formData.schema_type === "new") {
-                            suggestedSchema = `${(newValue.first_name || "").toLowerCase()}_${(newValue.last_name || "").toLowerCase()}`.replace(/\s+/g, "_");
-                          } else if (formData.schema_type === "existing" && (!formData.schema_name || formData.schema_name === "public")) {
-                            suggestedSchema = formOptions.existing_schemas.find((s) => s !== "public") || "public";
-                          }
-                          setFormData((prev) => ({
-                            ...prev,
-                            owner_id: ownerId,
-                            schema_name: suggestedSchema,
-                          }));
-                          setFormTouched((t) => ({ ...t, owner_id: true }));
-                          setFormErrors((prevErr) => ({
-                            ...prevErr,
-                            owner_id: validateField("owner_id", ownerId),
-                          }));
-                        }}
+                        onChange={handleOwnerSelect}
                         onBlur={() => handleBlur("owner_id")}
+                        error={Boolean(formErrors.owner_id && formTouched.owner_id)}
+                        helperText={formTouched.owner_id && formErrors.owner_id}
+                        noOptionsText="No owners found"
                         renderOption={(props, option) => (
                           <Box
                             component="li"
@@ -2011,80 +2246,85 @@ export default function Businesses() {
                               {option.first_name} {option.last_name} ({option.email})
                             </Typography>
                             <Typography sx={{ fontSize: "11.5px", color: "#64748b" }}>
-                              {option.business_name || "No business yet"}
+                              {option.business_name || option.phone || "No business yet"}
                             </Typography>
                           </Box>
                         )}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Business Owner *"
-                            placeholder="Type to search owner..."
-                            error={Boolean(formErrors.owner_id && formTouched.owner_id)}
-                            helperText={formTouched.owner_id && formErrors.owner_id}
-                            sx={{
-                              ...modernInputStyles,
-                              ...(editingBusiness && {
-                                "& .MuiOutlinedInput-root": {
-                                  ...modernInputStyles["& .MuiOutlinedInput-root"],
-                                  backgroundColor: "#f8fafc",
-                                  cursor: "not-allowed",
-                                },
-                              }),
-                            }}
-                          />
-                        )}
+                        sx={{
+                          ...modernInputStyles,
+                          ...(editingBusiness && {
+                            "& .MuiOutlinedInput-root": {
+                              ...modernInputStyles["& .MuiOutlinedInput-root"],
+                              backgroundColor: "#f8fafc",
+                              cursor: "not-allowed",
+                            },
+                          }),
+                        }}
                       />
                     </Box>
 
-                    {/* Role Dropdown: Shows all created roles */}
+                    {/* Searchable Role Dropdown */}
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 200px" } }}>
-                      <TextField
-                        select
-                        fullWidth
-                        size="small"
+                      <AsyncSearchAutocomplete
                         label="Role *"
-                        value={formData.role_id}
-                        onChange={(e) => {
-                          handleFieldChange("role_id", e.target.value);
-                        }}
+                        placeholder={loadingOptions ? "Loading roles..." : "Search role..."}
+                        disabled={loadingOptions}
+                        valueId={formData.role_id}
+                        initialOptions={formOptions.roles || []}
+                        getOptionLabel={(role) => role?.title || ""}
+                        localFilterFn={(role, q) =>
+                          (role.title || "").toLowerCase().includes(q) ||
+                          (role.description || "").toLowerCase().includes(q)
+                        }
+                        onChange={handleRoleSelect}
                         onBlur={() => handleBlur("role_id")}
                         error={Boolean(formErrors.role_id && formTouched.role_id)}
                         helperText={formTouched.role_id && formErrors.role_id}
+                        noOptionsText="No roles available"
+                        renderOption={(props, option) => (
+                          <Box
+                            component="li"
+                            {...props}
+                            key={option.id}
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "flex-start",
+                              py: 0.75,
+                              borderBottom: "1px solid #f1f5f9",
+                            }}
+                          >
+                            <Typography sx={{ fontSize: "13.5px", fontWeight: 600, color: "#1e293b" }}>
+                              {option.title}
+                            </Typography>
+                            {option.description ? (
+                              <Typography sx={{ fontSize: "11.5px", color: "#64748b" }}>
+                                {option.description}
+                              </Typography>
+                            ) : null}
+                          </Box>
+                        )}
                         sx={modernInputStyles}
-                      >
-                        <MenuItem value="">Select Role</MenuItem>
-                        {formOptions.roles.map((role) => (
-                          <MenuItem key={role.id} value={role.id}>
-                            {role.title}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
                     </Box>
                   </Box>
 
-                  {/* Row 3: Business Group Dropdown */}
+                  {/* Row 3: Live Backend Searchable Business Group Dropdown */}
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 320px" } }}>
-                      <TextField
-                        select
-                        fullWidth
-                        size="small"
+                      <AsyncSearchAutocomplete
                         label="Business Group"
-                        value={formData.business_group_id || ""}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, business_group_id: e.target.value }))}
+                        placeholder="Search business group (Optional)..."
+                        valueId={formData.business_group_id || ""}
+                        initialOptions={formOptions.business_groups || []}
+                        selectedFallback={selectedMeta.group}
+                        fetchOptions={fetchGroupOptions}
+                        getOptionLabel={(grp) => grp?.name || ""}
+                        onChange={handleGroupSelect}
                         helperText="Assign this business to a business group (Optional)"
+                        noOptionsText="No business groups found"
                         sx={modernInputStyles}
-                      >
-                        <MenuItem value="">
-                          <em>None (No Group)</em>
-                        </MenuItem>
-                        {(formOptions.business_groups || []).map((grp) => (
-                          <MenuItem key={grp.id} value={grp.id}>
-                            {grp.name}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
                     </Box>
                   </Box>
                 </Box>
@@ -2143,6 +2383,7 @@ export default function Businesses() {
                         const newType = e.target.value;
                         let nextSchema = formData.schema_name;
                         if (newType === "existing") {
+                          delete formValuesRef.current.schema_name;
                           // Auto pick first existing schema if none or default
                           const available = formOptions.existing_schemas.filter((s) => s !== "public");
                           nextSchema = available.length > 0 ? available[0] : "public";
@@ -2193,36 +2434,15 @@ export default function Businesses() {
                       />
 
                       {formData.schema_type === "new" && (
-                        <Box sx={{ pl: 4, pt: 1, maxWidth: "480px" }}>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            label="New schema name *"
-                            placeholder="e.g. humair_sarwar, shop_schema"
-                            value={formData.schema_name}
-                            onChange={(e) => handleFieldChange("schema_name", e.target.value)}
-                            onBlur={() => handleBlur("schema_name")}
-                            error={Boolean(formErrors.schema_name && formTouched.schema_name)}
-                            helperText={formTouched.schema_name && formErrors.schema_name}
-                            sx={modernInputStyles}
-                            InputProps={{
-                              endAdornment: formData.schema_name ? (
-                                <InputAdornment position="end">
-                                  {formErrors.schema_name ? (
-                                    <CloseRoundedIcon sx={{ color: "#dc2626", fontSize: 20 }} />
-                                  ) : (
-                                    <CheckCircleOutlineRoundedIcon sx={{ color: "#16a34a", fontSize: 20 }} />
-                                  )}
-                                </InputAdornment>
-                              ) : null,
-                            }}
-                          />
-                          {!formErrors.schema_name && formData.schema_name && (
-                            <Typography sx={{ fontSize: "11.5px", color: "#16a34a", mt: 0.5 }}>
-                              This name is free. When you save, this schema is registered and migrations can be applied.
-                            </Typography>
-                          )}
-                        </Box>
+                        <SchemaNameField
+                          formValuesRef={formValuesRef}
+                          value={formData.schema_name}
+                          touched={Boolean(formTouched.schema_name)}
+                          error={formErrors.schema_name}
+                          existingSchemas={formOptions.existing_schemas}
+                          onCommit={commitFieldValue}
+                          onErrorChange={handleFastErrorChange}
+                        />
                       )}
                     </RadioGroup>
                   </Card>
@@ -2246,49 +2466,25 @@ export default function Businesses() {
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2.2 }}>
                   {/* Phones Row with UNIFIED outlined border (Matches User Reference Image) */}
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                    {/* Business Mobile No - Unified outline with flag inside */}
+                    {/* Business Mobile No - All country flags & searchable dial picker */}
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 320px" } }}>
-                      <TextField
+                      <FastTextField
+                        field="mobile_no"
+                        formValuesRef={formValuesRef}
+                        value={formData.mobile_no}
+                        onCommit={commitFieldValue}
                         fullWidth
                         size="small"
                         label="Business Mobile No"
                         placeholder="7123456789"
-                        value={formData.mobile_no}
-                        onChange={(e) => setFormData({ ...formData, mobile_no: e.target.value })}
                         InputProps={{
                           startAdornment: (
-                            <InputAdornment position="start" sx={{ mr: 1, display: "flex", alignItems: "center" }}>
-                              <Select
-                                variant="standard"
-                                disableUnderline
-                                value={formData.mobile_dial}
-                                onChange={(e) => setFormData({ ...formData, mobile_dial: e.target.value })}
-                                sx={{
-                                  "& .MuiSelect-select": {
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 0.8,
-                                    py: 0.2,
-                                    pr: "18px !important",
-                                    fontSize: "13.5px",
-                                    fontWeight: 600,
-                                    color: "#1e293b",
-                                  },
-                                  "& .MuiSvgIcon-root": {
-                                    fontSize: 18,
-                                    color: "#64748b",
-                                  },
-                                }}
-                              >
-                                {DIAL_CODES.map((d) => (
-                                  <MenuItem key={d.code} value={d.code} sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-                                    <CountryFlag code={d.code} width={22} height={14} />
-                                    <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>{d.code}</Typography>
-                                    <Typography sx={{ fontSize: "12px", color: "#64748b" }}>{d.name}</Typography>
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                              <Divider orientation="vertical" flexItem sx={{ height: 20, mx: 0.8, my: "auto" }} />
+                            <InputAdornment position="start" sx={{ mr: 0.5, display: "flex", alignItems: "center" }}>
+                              <PhoneDialPicker
+                                dialCode={formData.mobile_dial}
+                                iso={formData.mobile_iso}
+                                onChange={handleMobileDialSelect}
+                              />
                             </InputAdornment>
                           ),
                         }}
@@ -2296,49 +2492,25 @@ export default function Businesses() {
                       />
                     </Box>
 
-                    {/* Business Whatsapp No - Unified outline with flag inside */}
+                    {/* Business Whatsapp No - All country flags & searchable dial picker */}
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 320px" } }}>
-                      <TextField
+                      <FastTextField
+                        field="whatsapp_no"
+                        formValuesRef={formValuesRef}
+                        value={formData.whatsapp_no}
+                        onCommit={commitFieldValue}
                         fullWidth
                         size="small"
                         label="Business Whatsapp No"
                         placeholder="7123456789"
-                        value={formData.whatsapp_no}
-                        onChange={(e) => setFormData({ ...formData, whatsapp_no: e.target.value })}
                         InputProps={{
                           startAdornment: (
-                            <InputAdornment position="start" sx={{ mr: 1, display: "flex", alignItems: "center" }}>
-                              <Select
-                                variant="standard"
-                                disableUnderline
-                                value={formData.whatsapp_dial}
-                                onChange={(e) => setFormData({ ...formData, whatsapp_dial: e.target.value })}
-                                sx={{
-                                  "& .MuiSelect-select": {
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 0.8,
-                                    py: 0.2,
-                                    pr: "18px !important",
-                                    fontSize: "13.5px",
-                                    fontWeight: 600,
-                                    color: "#1e293b",
-                                  },
-                                  "& .MuiSvgIcon-root": {
-                                    fontSize: 18,
-                                    color: "#64748b",
-                                  },
-                                }}
-                              >
-                                {DIAL_CODES.map((d) => (
-                                  <MenuItem key={d.code} value={d.code} sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-                                    <CountryFlag code={d.code} width={22} height={14} />
-                                    <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>{d.code}</Typography>
-                                    <Typography sx={{ fontSize: "12px", color: "#64748b" }}>{d.name}</Typography>
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                              <Divider orientation="vertical" flexItem sx={{ height: 20, mx: 0.8, my: "auto" }} />
+                            <InputAdornment position="start" sx={{ mr: 0.5, display: "flex", alignItems: "center" }}>
+                              <PhoneDialPicker
+                                dialCode={formData.whatsapp_dial}
+                                iso={formData.whatsapp_iso}
+                                onChange={handleWhatsappDialSelect}
+                              />
                             </InputAdornment>
                           ),
                         }}
@@ -2348,165 +2520,210 @@ export default function Businesses() {
                   </Box>
 
                   {/* Address */}
-                  <TextField
+                  <FastTextField
+                    field="address"
+                    formValuesRef={formValuesRef}
+                    value={formData.address}
+                    onCommit={commitFieldValue}
                     fullWidth
                     size="small"
                     label="Business Address"
                     placeholder="Street address, building number..."
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     sx={modernInputStyles}
                   />
 
                   {/* City Dropdown (Shows all created cities), State, Post Code */}
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                    {/* City Select Dropdown */}
+                    {/* Live Backend Searchable City Dropdown */}
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 200px" } }}>
-                      <TextField
-                        select
+                      <AsyncSearchAutocomplete
                         required
-                        fullWidth
-                        size="small"
                         label="City"
-                        value={formData.city_id || ""}
-                        onChange={(e) => {
-                          const selectedId = e.target.value;
-                          const selectedCity = formOptions.cities.find((c) => String(c.id) === String(selectedId));
-                          const nextCityName = selectedCity ? selectedCity.name : "";
-                          const nextCountryId = (!formData.country_id && selectedCity?.country_id) ? selectedCity.country_id : formData.country_id;
-
-                          setFormData((prev) => ({
-                            ...prev,
-                            city_id: selectedId,
-                            city_name: nextCityName,
-                            country_id: nextCountryId,
-                          }));
-                          setFormTouched((t) => ({ ...t, city_id: true }));
-                          setFormErrors((prevErr) => ({
-                            ...prevErr,
-                            city_id: validateField("city_id", selectedId),
-                          }));
-                        }}
+                        placeholder="Search city..."
+                        valueId={formData.city_id || ""}
+                        initialOptions={availableCities}
+                        selectedFallback={selectedMeta.city}
+                        fetchOptions={fetchCityOptions}
+                        resetKey={formData.country_id || "all"}
+                        getOptionLabel={(city) => city?.name || ""}
+                        onChange={handleCitySelect}
                         onBlur={() => handleBlur("city_id")}
                         error={Boolean(formErrors.city_id && formTouched.city_id)}
                         helperText={formTouched.city_id && formErrors.city_id}
-                        sx={modernInputStyles}
-                      >
-                        <MenuItem value="">Select City</MenuItem>
-                        {availableCities.map((city) => (
-                          <MenuItem key={city.id} value={city.id}>
-                            {city.name}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    </Box>
-
-                    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 200px" } }}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label="State / Region"
-                        placeholder="e.g. Greater London, Punjab"
-                        value={formData.state_region}
-                        onChange={(e) => setFormData({ ...formData, state_region: e.target.value })}
+                        noOptionsText="No cities found"
+                        renderOption={(props, option) => (
+                          <Box
+                            component="li"
+                            {...props}
+                            key={option.id}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              py: 0.75,
+                              borderBottom: "1px solid #f1f5f9",
+                            }}
+                          >
+                            <Typography sx={{ fontSize: "13.5px", fontWeight: 500, color: "#1e293b" }}>
+                              {option.name}
+                            </Typography>
+                            {option.country?.name ? (
+                              <Typography sx={{ fontSize: "11.5px", color: "#64748b", ml: 1 }}>
+                                {option.country.name}
+                              </Typography>
+                            ) : null}
+                          </Box>
+                        )}
                         sx={modernInputStyles}
                       />
                     </Box>
 
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 200px" } }}>
-                      <TextField
+                      <FastTextField
+                        field="state_region"
+                        formValuesRef={formValuesRef}
+                        value={formData.state_region}
+                        onCommit={commitFieldValue}
+                        fullWidth
+                        size="small"
+                        label="State / Region"
+                        placeholder="e.g. Greater London, Punjab"
+                        sx={modernInputStyles}
+                      />
+                    </Box>
+
+                    <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 200px" } }}>
+                      <FastTextField
+                        field="post_code"
+                        formValuesRef={formValuesRef}
+                        value={formData.post_code}
+                        onCommit={commitFieldValue}
                         fullWidth
                         size="small"
                         label="Post Code"
                         placeholder="e.g. E1 6AN, 40100"
-                        value={formData.post_code}
-                        onChange={(e) => setFormData({ ...formData, post_code: e.target.value })}
                         sx={modernInputStyles}
                       />
                     </Box>
                   </Box>
 
-                  {/* Country Dropdown (Shows all created countries) & Currency */}
+                  {/* Country (Live Backend Search) & Currency (All Currencies Search) */}
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 300px" } }}>
-                      <TextField
-                        select
+                      <AsyncSearchAutocomplete
                         required
-                        fullWidth
-                        size="small"
                         label="Country"
-                        value={formData.country_id}
-                        onChange={handleCountryChange}
+                        placeholder="Search country..."
+                        valueId={formData.country_id || ""}
+                        initialOptions={formOptions.countries}
+                        selectedFallback={selectedMeta.country}
+                        fetchOptions={fetchCountryOptions}
+                        getOptionLabel={(c) => c?.name || ""}
+                        localFilterFn={(c, q) =>
+                          (c.name || "").toLowerCase().includes(q) ||
+                          (c.nice_name || "").toLowerCase().includes(q) ||
+                          (c.iso || "").toLowerCase().includes(q) ||
+                          (c.currency || "").toLowerCase().includes(q)
+                        }
+                        onChange={handleCountrySelect}
                         onBlur={() => handleBlur("country_id")}
                         error={Boolean(formErrors.country_id && formTouched.country_id)}
                         helperText={formTouched.country_id && formErrors.country_id}
+                        noOptionsText="No countries found"
+                        renderOption={(props, option) => (
+                          <Box
+                            component="li"
+                            {...props}
+                            key={option.id}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 1,
+                              py: 0.75,
+                              borderBottom: "1px solid #f1f5f9",
+                            }}
+                          >
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              {option.iso ? <CountryFlag iso={option.iso} width={20} height={14} /> : null}
+                              <Typography sx={{ fontSize: "13.5px", fontWeight: 500, color: "#1e293b" }}>
+                                {option.name}
+                              </Typography>
+                            </Box>
+                            {option.currency ? (
+                              <Typography sx={{ fontSize: "11.5px", color: "#64748b" }}>
+                                {option.currency}
+                              </Typography>
+                            ) : null}
+                          </Box>
+                        )}
                         sx={modernInputStyles}
-                      >
-                        <MenuItem value="">Select Country</MenuItem>
-                        {formOptions.countries.map((c) => (
-                          <MenuItem key={c.id} value={c.id}>
-                            {c.name}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
                     </Box>
 
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 300px" } }}>
-                      <TextField
-                        select
-                        fullWidth
-                        size="small"
+                      <AsyncSearchAutocomplete
                         label="Currency"
-                        value={formData.currency}
-                        onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                        placeholder="Search currency (GBP, USD, PKR...)"
+                        clearable={false}
+                        valueId={formData.currency || "GBP"}
+                        initialOptions={formOptions.currencies || []}
+                        getOptionId={(c) => c?.code}
+                        getOptionLabel={(c) => (c ? `${c.name} (${c.code})` : "")}
+                        localFilterFn={(c, q) =>
+                          (c.code || "").toLowerCase().includes(q) ||
+                          (c.name || "").toLowerCase().includes(q)
+                        }
+                        onChange={handleCurrencySelect}
                         helperText="Fills in from country. You can change it."
+                        noOptionsText="No currency matched"
                         sx={modernInputStyles}
-                      >
-                        {formOptions.currencies.map((curr) => (
-                          <MenuItem key={curr.code} value={curr.code}>
-                            {curr.name} ({curr.code})
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
                     </Box>
                   </Box>
 
                   {/* Coordinates */}
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 250px" } }}>
-                      <TextField
+                      <FastTextField
+                        field="latitude"
+                        formValuesRef={formValuesRef}
+                        value={formData.latitude}
+                        onCommit={commitFieldValue}
                         fullWidth
                         size="small"
                         label="Latitude"
                         placeholder="e.g. 51.5074"
-                        value={formData.latitude}
-                        onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
                         sx={modernInputStyles}
                       />
                     </Box>
                     <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 250px" } }}>
-                      <TextField
+                      <FastTextField
+                        field="longitude"
+                        formValuesRef={formValuesRef}
+                        value={formData.longitude}
+                        onCommit={commitFieldValue}
                         fullWidth
                         size="small"
                         label="Longitude"
                         placeholder="e.g. -0.1278"
-                        value={formData.longitude}
-                        onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
                         sx={modernInputStyles}
                       />
                     </Box>
                   </Box>
 
                   {/* Description */}
-                  <TextField
+                  <FastTextField
+                    field="description"
+                    formValuesRef={formValuesRef}
+                    value={formData.description}
+                    onCommit={commitFieldValue}
                     fullWidth
                     multiline
                     rows={3}
                     size="small"
                     label="Description"
                     placeholder="Brief notes, business overview or scope..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     sx={modernInputStyles}
                   />
                 </Box>
@@ -2764,6 +2981,89 @@ export default function Businesses() {
             </Box>
           )}
         </DialogContent>
+      </Dialog>
+
+      {/* Confirm Delete Business Dialog */}
+      <Dialog
+        open={Boolean(deleteConfirmBusiness)}
+        onClose={() => !deleteLoading && setDeleteConfirmBusiness(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: "16px", p: 2.5, border: "1px solid #e2e8f0" },
+        }}
+      >
+        {deleteConfirmBusiness && (
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: "10px",
+                    bgcolor: "#fef2f2",
+                    color: "#ef4444",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <DeleteOutlineIcon sx={{ fontSize: 18 }} />
+                </Box>
+                <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>
+                  Delete Business?
+                </Typography>
+              </Box>
+              <IconButton
+                size="small"
+                disabled={deleteLoading}
+                onClick={() => setDeleteConfirmBusiness(null)}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Box>
+
+            <Typography sx={{ fontSize: "13px", color: "#475569", mb: 2.5, lineHeight: 1.5 }}>
+              Are you sure you want to delete{" "}
+              <Box component="span" sx={{ fontWeight: 700, color: "#0f172a" }}>
+                "{deleteConfirmBusiness.name}"
+              </Box>
+              ? You can restore it later from the Deleted tab.
+            </Typography>
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+              <Button
+                variant="outlined"
+                disabled={deleteLoading}
+                onClick={() => setDeleteConfirmBusiness(null)}
+                sx={{
+                  borderRadius: "8px",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  color: "#475569",
+                  borderColor: "#cbd5e1",
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                disableElevation
+                disabled={deleteLoading}
+                onClick={() => handleDeleteOrRestore(deleteConfirmBusiness)}
+                sx={{
+                  borderRadius: "8px",
+                  textTransform: "none",
+                  fontWeight: 700,
+                }}
+              >
+                {deleteLoading ? "Deleting..." : "Delete"}
+              </Button>
+            </Box>
+          </Box>
+        )}
       </Dialog>
     </Box>
   );
